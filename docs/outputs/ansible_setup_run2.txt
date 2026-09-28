@@ -1,0 +1,46 @@
+
+PLAY [Prepare host for containers] *********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [vm1]
+
+TASK [common : Create deployment user] *****************************************
+ok: [vm1]
+
+TASK [common : Authorize deployer SSH key] *************************************
+ok: [vm1]
+
+TASK [common : Allow passwordless sudo for deployer] ***************************
+ok: [vm1]
+
+TASK [common : Harden sshd (key-only, no root login)] **************************
+ok: [vm1]
+
+TASK [docker : Remove conflicting packages] ************************************
+ok: [vm1]
+
+TASK [docker : Install repository prerequisites] *******************************
+ok: [vm1]
+
+TASK [docker : Create apt keyrings directory] **********************************
+ok: [vm1]
+
+TASK [docker : Download Docker GPG key] ****************************************
+ok: [vm1]
+
+TASK [docker : Add Docker apt repository] **************************************
+ok: [vm1]
+
+TASK [docker : Install Docker Engine and Compose plugin] ***********************
+ok: [vm1]
+
+TASK [docker : Enable Docker and containerd on boot] ***************************
+ok: [vm1] => (item=containerd)
+ok: [vm1] => (item=docker)
+
+TASK [docker : Let deployer use Docker without sudo] ***************************
+ok: [vm1]
+
+PLAY RECAP *********************************************************************
+vm1                        : ok=13   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

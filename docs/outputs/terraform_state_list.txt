@@ -1,0 +1,6 @@
+local_file.inventory
+local_file.network_vars
+module.firewall.terraform_data.security_group
+module.host.terraform_data.vm
+module.iam.terraform_data.operator
+module.network.terraform_data.vpc

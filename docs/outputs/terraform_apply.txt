@@ -1,0 +1,111 @@
+module.host.terraform_data.vm: Creating...
+module.network.terraform_data.vpc: Creating...
+module.network.terraform_data.vpc: Creation complete after 0s [id=a4b07ca9-3362-3337-bb94-504d438da26a]
+module.host.terraform_data.vm: Provisioning with 'remote-exec'...
+module.host.terraform_data.vm (remote-exec): Connecting to remote host via SSH...
+module.host.terraform_data.vm (remote-exec):   Host: 111.88.162.106
+module.host.terraform_data.vm (remote-exec):   User: student
+module.host.terraform_data.vm (remote-exec):   Password: false
+module.host.terraform_data.vm (remote-exec):   Private key: true
+module.host.terraform_data.vm (remote-exec):   Certificate: false
+module.host.terraform_data.vm (remote-exec):   SSH Agent: true
+module.host.terraform_data.vm (remote-exec):   Checking Host Key: false
+module.host.terraform_data.vm (remote-exec):   Target Platform: unix
+local_file.network_vars: Creating...
+local_file.network_vars: Creation complete after 0s [id=00b2f428a06942dc297c6295502657e81694806e]
+module.host.terraform_data.vm (remote-exec): Connected!
+module.host.terraform_data.vm (remote-exec): OS: Ubuntu 24.04.4 LTS
+module.host.terraform_data.vm: Creation complete after 1s [id=7b80d049-b710-3f6e-2c0f-c54e6eb84a11]
+module.iam.terraform_data.operator: Creating...
+module.firewall.terraform_data.security_group: Creating...
+module.firewall.terraform_data.security_group: Provisioning with 'remote-exec'...
+module.firewall.terraform_data.security_group (remote-exec): Connecting to remote host via SSH...
+module.firewall.terraform_data.security_group (remote-exec):   Host: 111.88.162.106
+module.firewall.terraform_data.security_group (remote-exec):   User: student
+module.firewall.terraform_data.security_group (remote-exec):   Password: false
+module.firewall.terraform_data.security_group (remote-exec):   Private key: true
+module.firewall.terraform_data.security_group (remote-exec):   Certificate: false
+module.firewall.terraform_data.security_group (remote-exec):   SSH Agent: true
+module.firewall.terraform_data.security_group (remote-exec):   Checking Host Key: false
+module.firewall.terraform_data.security_group (remote-exec):   Target Platform: unix
+module.iam.terraform_data.operator: Provisioning with 'remote-exec'...
+module.iam.terraform_data.operator (remote-exec): Connecting to remote host via SSH...
+module.iam.terraform_data.operator (remote-exec):   Host: 111.88.162.106
+module.iam.terraform_data.operator (remote-exec):   User: student
+module.iam.terraform_data.operator (remote-exec):   Password: false
+module.iam.terraform_data.operator (remote-exec):   Private key: true
+module.iam.terraform_data.operator (remote-exec):   Certificate: false
+module.iam.terraform_data.operator (remote-exec):   SSH Agent: true
+module.iam.terraform_data.operator (remote-exec):   Checking Host Key: false
+module.iam.terraform_data.operator (remote-exec):   Target Platform: unix
+local_file.inventory: Creating...
+local_file.inventory: Creation complete after 0s [id=733f283851d2381492c8b27462b953f94cbeed96]
+module.firewall.terraform_data.security_group (remote-exec): Connected!
+module.iam.terraform_data.operator (remote-exec): Connected!
+module.iam.terraform_data.operator: Provisioning with 'file'...
+module.firewall.terraform_data.security_group (remote-exec): Default incoming policy changed to 'deny'
+module.firewall.terraform_data.security_group (remote-exec): (be sure to update your rules accordingly)
+module.firewall.terraform_data.security_group (remote-exec): Default outgoing policy changed to 'allow'
+module.firewall.terraform_data.security_group (remote-exec): (be sure to update your rules accordingly)
+module.firewall.terraform_data.security_group (remote-exec): Rules updated
+module.firewall.terraform_data.security_group (remote-exec): Rules updated
+module.firewall.terraform_data.security_group (remote-exec): Rules updated
+module.iam.terraform_data.operator: Provisioning with 'file'...
+module.firewall.terraform_data.security_group (remote-exec): Rules updated
+module.firewall.terraform_data.security_group (remote-exec): Rules updated (v6)
+module.firewall.terraform_data.security_group (remote-exec): Firewall is active and enabled on system startup
+module.iam.terraform_data.operator: Provisioning with 'remote-exec'...
+module.iam.terraform_data.operator (remote-exec): Connecting to remote host via SSH...
+module.iam.terraform_data.operator (remote-exec):   Host: 111.88.162.106
+module.iam.terraform_data.operator (remote-exec):   User: student
+module.iam.terraform_data.operator (remote-exec):   Password: false
+module.iam.terraform_data.operator (remote-exec):   Private key: true
+module.iam.terraform_data.operator (remote-exec):   Certificate: false
+module.iam.terraform_data.operator (remote-exec):   SSH Agent: true
+module.iam.terraform_data.operator (remote-exec):   Checking Host Key: false
+module.iam.terraform_data.operator (remote-exec):   Target Platform: unix
+module.firewall.terraform_data.security_group (remote-exec): Status: active
+module.firewall.terraform_data.security_group (remote-exec): Logging: on (low)
+module.firewall.terraform_data.security_group (remote-exec): Default: deny (incoming), allow (outgoing), disabled (routed)
+module.firewall.terraform_data.security_group (remote-exec): New profiles: skip
+
+module.firewall.terraform_data.security_group (remote-exec): To                         Action      From
+module.firewall.terraform_data.security_group (remote-exec): --                         ------      ----
+module.firewall.terraform_data.security_group (remote-exec): 22/tcp                     ALLOW IN    93.175.x.x               # ssh-admin
+module.firewall.terraform_data.security_group (remote-exec): 22/tcp                     ALLOW IN    89.124.x.x             # ssh-admin
+module.firewall.terraform_data.security_group (remote-exec): 22/tcp                     ALLOW IN    83.242.x.x              # ssh-admin
+module.firewall.terraform_data.security_group (remote-exec): 80/tcp                     ALLOW IN    Anywhere                   # public
+module.firewall.terraform_data.security_group (remote-exec): 80/tcp (v6)                ALLOW IN    Anywhere (v6)              # public
+
+module.firewall.terraform_data.security_group: Creation complete after 1s [id=6e0797d1-1390-4f87-7c6a-44046d1a7e99]
+module.iam.terraform_data.operator (remote-exec): Connected!
+module.iam.terraform_data.operator (remote-exec): /home/student/.tf-iam-vm-operator/sudoers: parsed OK
+module.iam.terraform_data.operator (remote-exec): Matching Defaults entries for
+module.iam.terraform_data.operator (remote-exec):     vm-operator on zaporozhetsas:
+module.iam.terraform_data.operator (remote-exec):     env_reset, mail_badpass,
+module.iam.terraform_data.operator (remote-exec):     secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin,
+module.iam.terraform_data.operator (remote-exec):     use_pty
+
+module.iam.terraform_data.operator (remote-exec): User vm-operator may run the following
+module.iam.terraform_data.operator (remote-exec):         commands on zaporozhetsas:
+module.iam.terraform_data.operator (remote-exec):     (root) NOPASSWD: /usr/bin/systemctl
+module.iam.terraform_data.operator (remote-exec):         start docker,
+module.iam.terraform_data.operator (remote-exec):         /usr/bin/systemctl stop docker,
+module.iam.terraform_data.operator (remote-exec):         /usr/bin/systemctl restart
+module.iam.terraform_data.operator (remote-exec):         docker, /usr/sbin/reboot ""
+module.iam.terraform_data.operator: Creation complete after 2s [id=e43ca945-6999-06ae-6052-fa322604abc3]
+
+Apply complete! Resources: 6 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+app_subnet = "10.20.1.0/24"
+firewall_rules = [
+  "allow proto tcp from 93.175.x.x/32 to any port 22 comment 'ssh-admin'",
+  "allow proto tcp from 89.124.x.x/32 to any port 22 comment 'ssh-admin'",
+  "allow proto tcp from 83.242.x.x/32 to any port 22 comment 'ssh-admin'",
+  "allow proto tcp from any to any port 80 comment 'public'",
+]
+operator_user = "vm-operator"
+ssh_command = "ssh student@111.88.162.106"
+vm_ip = "111.88.162.106"

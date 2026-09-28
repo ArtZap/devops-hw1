@@ -1,0 +1,6 @@
+- name: Prepare host for containers
+  hosts: app_hosts
+  become: true
+  roles:
+    - common
+    - docker

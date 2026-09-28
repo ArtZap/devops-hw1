@@ -1,0 +1,17 @@
+$ curl -i http://111.88.162.106
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 28 Sep 2026 16:22:40 GMT
+Content-Type: text/html
+Content-Length: 203
+Connection: keep-alive
+Last-Modified: Mon, 28 Sep 2026 16:20:22 GMT
+ETag: "6aba93c6-cb"
+Accept-Ranges: bytes
+X-Proxy: hw1-nginx
+
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hello World</title></head>
+<body><h1>Hello World</h1><p>Served by the app container behind the nginx reverse proxy.</p></body>
+</html>

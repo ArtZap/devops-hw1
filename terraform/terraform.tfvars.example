@@ -1,0 +1,6 @@
+vm_ip = "111.88.162.106"
+
+# Your public IP(s) as /32. Check with: ssh <vm> 'echo $SSH_CLIENT'
+admin_cidrs = [
+  "203.0.113.10/32",
+]
