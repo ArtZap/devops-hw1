@@ -1,0 +1,116 @@
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # local_file.inventory will be created
+  + resource "local_file" "inventory" {
+      + content              = (known after apply)
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0644"
+      + filename             = "./../ansible/inventory.ini"
+      + id                   = (known after apply)
+    }
+
+  # local_file.network_vars will be created
+  + resource "local_file" "network_vars" {
+      + content              = (known after apply)
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0644"
+      + filename             = "./../ansible/group_vars/all/network.yml"
+      + id                   = (known after apply)
+    }
+
+  # module.firewall.terraform_data.security_group will be created
+  + resource "terraform_data" "security_group" {
+      + id               = (known after apply)
+      + input            = {
+          + host     = (known after apply)
+          + key_path = "/home/paranoik/.ssh/id_ed25519"
+          + user     = "student"
+        }
+      + output           = (known after apply)
+      + triggers_replace = {
+          + host  = (known after apply)
+          + rules = [
+              + "allow proto tcp from 93.175.x.x/32 to any port 22 comment 'ssh-admin'",
+              + "allow proto tcp from 89.124.x.x/32 to any port 22 comment 'ssh-admin'",
+              + "allow proto tcp from 83.242.x.x/32 to any port 22 comment 'ssh-admin'",
+              + "allow proto tcp from any to any port 80 comment 'public'",
+            ]
+        }
+    }
+
+  # module.host.terraform_data.vm will be created
+  + resource "terraform_data" "vm" {
+      + id               = (known after apply)
+      + input            = "111.88.162.106"
+      + output           = (known after apply)
+      + triggers_replace = [
+          + "111.88.162.106",
+        ]
+    }
+
+  # module.iam.terraform_data.operator will be created
+  + resource "terraform_data" "operator" {
+      + id               = (known after apply)
+      + input            = {
+          + host     = (known after apply)
+          + key_path = "/home/paranoik/.ssh/id_ed25519"
+          + operator = "vm-operator"
+          + user     = "student"
+        }
+      + output           = (known after apply)
+      + triggers_replace = {
+          + host    = (known after apply)
+          + key     = "2c611f3d54de3e981715b75acdeeeaf55501d0c02d82f7e72ebd193fb3213765"
+          + sudoers = "253b70795b0c736505b427287b5442385349fd4618083d6d89ae03462a7b0573"
+          + user    = "vm-operator"
+        }
+    }
+
+  # module.network.terraform_data.vpc will be created
+  + resource "terraform_data" "vpc" {
+      + id     = (known after apply)
+      + input  = {
+          + app_gateway = "10.20.1.1"
+          + app_subnet  = "10.20.1.0/24"
+          + cidr        = "10.20.0.0/16"
+        }
+      + output = (known after apply)
+    }
+
+Plan: 6 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + app_subnet     = (known after apply)
+  + firewall_rules = [
+      + "allow proto tcp from 93.175.x.x/32 to any port 22 comment 'ssh-admin'",
+      + "allow proto tcp from 89.124.x.x/32 to any port 22 comment 'ssh-admin'",
+      + "allow proto tcp from 83.242.x.x/32 to any port 22 comment 'ssh-admin'",
+      + "allow proto tcp from any to any port 80 comment 'public'",
+    ]
+  + operator_user  = "vm-operator"
+  + ssh_command    = (known after apply)
+  + vm_ip          = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
