@@ -1,0 +1,56 @@
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+# Leftover system nginx from an earlier lab holds port 80.
+- name: Stop and disable host nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: stopped
+    enabled: false
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Create application directories
+  ansible.builtin.file:
+    path: "{{ app_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: "0755"
+  loop: ["", proxy, app]
+
+- name: Copy compose project
+  ansible.builtin.copy:
+    src: "{{ app_compose_src }}/{{ item }}"
+    dest: "{{ app_dir }}/{{ item }}"
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: "0644"
+  loop:
+    - docker-compose.yml
+    - proxy/nginx.conf
+    - app/index.html
+  notify: Restart compose project
+
+- name: Write compose environment
+  ansible.builtin.copy:
+    dest: "{{ app_dir }}/.env"
+    content: |
+      # Managed by Ansible, value from Terraform
+      APP_SUBNET={{ app_subnet }}
+    owner: "{{ deployer_user }}"
+    group: "{{ deployer_user }}"
+    mode: "0644"
+
+- name: Start compose project
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    state: present
+
+- name: Wait until the proxy serves the app
+  ansible.builtin.uri:
+    url: http://127.0.0.1/
+    return_content: true
+  register: app_response
+  until: app_response.status == 200 and 'Hello World' in app_response.content
+  retries: 12
+  delay: 5

@@ -1,0 +1,45 @@
+name: hw1
+
+services:
+  # Reverse proxy: the only service published on the host.
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Backend: reachable only inside app_net as http://app:80.
+  app:
+    image: nginx:1.27-alpine
+    expose:
+      - "80"
+    volumes:
+      - ./app/index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      config:
+        # Comes from Terraform (module.network) via /opt/app/.env.
+        - subnet: ${APP_SUBNET:-10.20.1.0/24}

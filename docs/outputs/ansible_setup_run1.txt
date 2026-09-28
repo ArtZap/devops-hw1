@@ -1,0 +1,52 @@
+
+PLAY [Prepare host for containers] *********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [vm1]
+
+TASK [common : Create deployment user] *****************************************
+changed: [vm1]
+
+TASK [common : Authorize deployer SSH key] *************************************
+changed: [vm1]
+
+TASK [common : Allow passwordless sudo for deployer] ***************************
+changed: [vm1]
+
+TASK [common : Harden sshd (key-only, no root login)] **************************
+changed: [vm1]
+
+TASK [docker : Remove conflicting packages] ************************************
+ok: [vm1]
+
+TASK [docker : Install repository prerequisites] *******************************
+ok: [vm1]
+
+TASK [docker : Create apt keyrings directory] **********************************
+ok: [vm1]
+
+TASK [docker : Download Docker GPG key] ****************************************
+[WARNING]: Module remote_tmp /root/.ansible/tmp did not exist and was created
+with a mode of 0700, this may cause issues when running as another user. To
+avoid this, create the remote_tmp dir with the correct permissions manually
+changed: [vm1]
+
+TASK [docker : Add Docker apt repository] **************************************
+changed: [vm1]
+
+TASK [docker : Install Docker Engine and Compose plugin] ***********************
+changed: [vm1]
+
+TASK [docker : Enable Docker and containerd on boot] ***************************
+ok: [vm1] => (item=containerd)
+ok: [vm1] => (item=docker)
+
+TASK [docker : Let deployer use Docker without sudo] ***************************
+changed: [vm1]
+
+RUNNING HANDLER [common : Reload sshd] *****************************************
+changed: [vm1]
+
+PLAY RECAP *********************************************************************
+vm1                        : ok=14   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

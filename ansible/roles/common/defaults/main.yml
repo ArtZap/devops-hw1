@@ -1,0 +1,3 @@
+deployer_user: deployer
+# Set per host in the Terraform-generated inventory.
+deployer_pubkey_path: ~/.ssh/id_ed25519.pub
