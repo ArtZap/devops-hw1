@@ -41,9 +41,10 @@ variable "admin_cidrs" {
     error_message = "admin_cidrs must be a non-empty list of valid CIDRs."
   }
 
+  # A prefix bound catches every wide range, not just the literal 0.0.0.0/0.
   validation {
-    condition     = !contains(var.admin_cidrs, "0.0.0.0/0")
-    error_message = "Opening SSH to the whole Internet is not allowed."
+    condition     = alltrue([for c in var.admin_cidrs : tonumber(split("/", c)[1]) >= 24])
+    error_message = "admin_cidrs entries must be /24 or narrower: SSH is not for the whole Internet."
   }
 }
 
@@ -51,6 +52,11 @@ variable "public_tcp_ports" {
   description = "TCP ports open to everyone (HTTP for the app)."
   type        = list(number)
   default     = [80]
+
+  validation {
+    condition     = !contains(var.public_tcp_ports, 22)
+    error_message = "Port 22 must not be public: SSH is limited to admin_cidrs."
+  }
 }
 
 variable "vpc_cidr" {

@@ -1,0 +1,40 @@
+### ./monitor.sh docker
+== Service: docker on pop-os ==
+Status: active
+Errors in syslog for the last hour: 87
+Top sources:
+      55  tailscaled
+      12  kernel
+      12  happd
+exit=0
+
+### ./monitor.sh apt-daily.service
+== Service: apt-daily.service on pop-os ==
+Status: inactive
+-- Last 10 journal lines --
+Sep 20 14:31:07 pop-os systemd[1]: apt-daily.service - Daily apt download activities was skipped because of an unmet condition check (ConditionACPower=true).
+Sep 21 17:14:40 pop-os systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Sep 21 17:14:41 pop-os systemd[1]: apt-daily.service: Deactivated successfully.
+Sep 21 17:14:41 pop-os systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Sep 22 22:23:15 pop-os systemd[1]: apt-daily.service - Daily apt download activities was skipped because of an unmet condition check (ConditionACPower=true).
+Sep 26 21:39:09 pop-os systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Sep 26 21:39:09 pop-os systemd[1]: apt-daily.service: Deactivated successfully.
+Sep 26 21:39:09 pop-os systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Sep 27 15:38:30 pop-os systemd[1]: apt-daily.service - Daily apt download activities was skipped because of an unmet condition check (ConditionACPower=true).
+Errors in syslog for the last hour: 87
+Top sources:
+      55  tailscaled
+      12  kernel
+      12  happd
+exit=1
+
+### ./monitor.sh nosuchsvc
+== Service: nosuchsvc on pop-os ==
+Unit 'nosuchsvc' not found
+Errors in syslog for the last hour: 87
+Top sources:
+      55  tailscaled
+      12  kernel
+      12  happd
+exit=3
+

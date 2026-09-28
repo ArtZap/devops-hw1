@@ -1,0 +1,45 @@
+### sudo ./monitor.sh docker
+== Service: docker on zaporozhetsas ==
+Status: active
+Errors in syslog for the last hour: 77
+Top sources:
+      71  containerd
+       4  dockerd
+       2  fwupd
+exit=0
+
+### sudo ./monitor.sh nginx
+== Service: nginx on zaporozhetsas ==
+Status: inactive
+-- Last 10 journal lines --
+Sep 24 16:56:04 zaporozhetsas systemd[1]: Starting nginx.service - A high performance web server and a reverse proxy server...
+Sep 24 16:56:04 zaporozhetsas systemd[1]: Started nginx.service - A high performance web server and a reverse proxy server.
+Sep 28 16:20:20 zaporozhetsas systemd[1]: Stopping nginx.service - A high performance web server and a reverse proxy server...
+Sep 28 16:20:20 zaporozhetsas systemd[1]: nginx.service: Deactivated successfully.
+Sep 28 16:20:20 zaporozhetsas systemd[1]: Stopped nginx.service - A high performance web server and a reverse proxy server.
+Errors in syslog for the last hour: 77
+Top sources:
+      71  containerd
+       4  dockerd
+       2  fwupd
+exit=1
+
+### sudo ./monitor.sh nosuchsvc
+== Service: nosuchsvc on zaporozhetsas ==
+Unit 'nosuchsvc' not found
+Errors in syslog for the last hour: 77
+Top sources:
+      71  containerd
+       4  dockerd
+       2  fwupd
+exit=3
+
+### ./monitor.sh docker   (no sudo: deployer is not in adm)
+== Service: docker on zaporozhetsas ==
+Status: active
+exit=0
+
+### ./monitor.sh "docker; id"
+WARN: /var/log/syslog.1 is not readable: run with sudo or join the 'adm' group
+exit=2
+ERROR: invalid service name: 'docker; id'
