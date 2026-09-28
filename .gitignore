@@ -1,0 +1,16 @@
+# Terraform: state and secrets stay local
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+.terraform.tfstate.lock.info
+
+# Keys
+*.pem
+id_*
+
+# Misc
+*.retry
+.vscode/
