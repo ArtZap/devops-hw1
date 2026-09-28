@@ -98,7 +98,7 @@ module.iam.terraform_data.operator
 module.network.terraform_data.vpc
 ```
 
-`terraform plan` сразу после `apply` показывает «No changes»: конфигурация и состояние совпадают. Правила firewall, которые применил Terraform ([`terraform_apply.txt`](docs/outputs/terraform_apply.txt)):
+`terraform plan` сразу после `apply` показывает «No changes»: конфигурация и состояние совпадают. Правила firewall, которые применил Terraform ([`terraform_apply.txt`](docs/outputs/terraform_apply.txt); личные IP администратора в репозитории замаскированы как `x.x`):
 
 ```
 To                         Action      From
