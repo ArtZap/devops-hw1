@@ -1,0 +1,8 @@
+- name: Prepare host for containers
+  hosts: app_hosts
+  become: true
+  roles:
+    - common     # deployer, passwordless sudo, sshd key-only
+    - operator   # least-privilege vm-operator (IAM)
+    - docker     # Docker CE + compose plugin, enabled on boot
+    - firewall   # ufw security group

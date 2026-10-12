@@ -1,0 +1,32 @@
+# IAM analogue on a single host: a role account that may manage the Docker
+# service and reboot the VM, nothing else. Password locked, key-only login.
+- name: Create operator account
+  ansible.builtin.user:
+    name: "{{ operator_user }}"
+    shell: /bin/bash
+    create_home: true
+    password_lock: true
+
+- name: Authorize operator SSH key
+  ansible.posix.authorized_key:
+    user: "{{ operator_user }}"
+    key: "{{ lookup('ansible.builtin.file', operator_pubkey_path | expanduser) }}"
+    exclusive: true
+
+# Exact command lines only: in sudoers a command without arguments allows any
+# arguments, so "" forbids them. "systemctl status" is left out on purpose -
+# it opens a pager as root, which is a shell escape.
+- name: Grant operator least-privilege sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ operator_user }}"
+    content: |
+      # Managed by Ansible (role operator). Docker service control and reboot only.
+      Cmnd_Alias VM_DOCKER = /usr/bin/systemctl start docker, \
+                             /usr/bin/systemctl stop docker, \
+                             /usr/bin/systemctl restart docker
+      Cmnd_Alias VM_POWER  = /usr/sbin/reboot ""
+      {{ operator_user }} ALL=(root) NOPASSWD: VM_DOCKER, VM_POWER
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
