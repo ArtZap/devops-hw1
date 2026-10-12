@@ -1,0 +1,21 @@
+# Terraform: state and secrets stay local
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+.terraform.tfstate.lock.info
+
+# Keys
+*.pem
+id_*
+
+# Misc
+*.retry
+.vscode/
+tfplan
+ansible/collections/
+
+# Personal admin IPs for the ufw role
+ansible/host_vars/*/admin.yml
