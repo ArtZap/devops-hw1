@@ -1,0 +1,5 @@
+# Bind-mounted files are not part of the compose hash, so restart explicitly.
+- name: Restart compose project
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    state: restarted

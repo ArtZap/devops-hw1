@@ -1,0 +1,23 @@
+docker_volume.web_content: Creating...
+docker_image.nginx: Creating...
+docker_network.web: Creating...
+docker_image.nginx: Creation complete after 1s [id=sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10nginx:1.27-alpine]
+docker_volume.web_content: Creation complete after 1s [id=tf_web_content]
+docker_network.web: Creation complete after 3s [id=88315b9b8b543f0d363b65510826d4455d170d627daacb17fc5b2fd04f578f27]
+docker_container.nginx: Creating...
+docker_container.nginx: Still creating... [00m10s elapsed]
+docker_container.nginx: Creation complete after 12s [id=a60445745ff57dedf5d53c251db858e416c8d6bc7c0870cf2dc98dd1aaad96f5]
+
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+container = "tf-nginx"
+curl_check = "curl -i http://111.88.162.106:8080/"
+network = {
+  "ip" = "10.30.0.10"
+  "name" = "tf_web_net"
+  "subnet" = "10.30.0.0/24"
+}
+url = "http://111.88.162.106:8080/"
+volume = "tf_web_content"

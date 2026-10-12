@@ -1,0 +1,18 @@
++ docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Networks}}'
+NAMES         IMAGE               STATUS                    PORTS                                 NETWORKS
+tf-nginx      65645c7bb6a0        Up 25 seconds (healthy)   0.0.0.0:8080->80/tcp                  tf_web_net
+hw1-nginx-1   nginx:1.27-alpine   Up 3 minutes (healthy)    0.0.0.0:80->80/tcp, [::]:80->80/tcp   hw1_app_net
+hw1-app-1     nginx:1.27-alpine   Up 3 minutes (healthy)    80/tcp                                hw1_app_net
+app           flask-demo:clean    Up 10 days                127.0.0.1:8081->8000/tcp              bridge
++ docker network inspect tf_web_net --format '{{.Name}} subnet={{(index .IPAM.Config 0).Subnet}} gw={{(index .IPAM.Config 0).Gateway}}: {{range .Containers}}{{.Name}}={{.IPv4Address}} {{end}}'
+tf_web_net subnet=10.30.0.0/24 gw=10.30.0.1: tf-nginx=10.30.0.10/24 
++ docker network inspect hw1_app_net --format '{{.Name}} subnet={{(index .IPAM.Config 0).Subnet}} gw={{(index .IPAM.Config 0).Gateway}}: {{range .Containers}}{{.Name}}={{.IPv4Address}} {{end}}'
+hw1_app_net subnet=10.20.1.0/24 gw=10.20.1.1: hw1-app-1=10.20.1.2/24 hw1-nginx-1=10.20.1.3/24 
++ docker inspect tf-nginx --format '{{range .Mounts}}{{.Type}} {{.Name}} -> {{.Destination}}{{end}}'
+volume tf_web_content -> /usr/share/nginx/html
++ docker exec hw1-nginx-1 wget -T 3 -qO- http://10.30.0.10/
+wget: download timed out
++ docker exec tf-nginx wget -T 3 -qO- http://10.20.1.2/
+200
+wget: download timed out
++ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
