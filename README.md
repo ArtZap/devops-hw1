@@ -77,7 +77,7 @@ docs/outputs/                 полные выводы команд
 Нужны Terraform ≥ 1.9, Ansible core ≥ 2.15 и SSH-ключ, который уже лежит в `authorized_keys` у `student` на VM.
 
 ```bash
-git clone https://github.com/ArtZap/devops-hw1-infra.git && cd devops-hw1-infra
+git clone https://github.com/ArtZap/devops-hw1.git && cd devops-hw1
 
 # 1. Ansible: настройка хоста (этап 3)
 cd ansible
