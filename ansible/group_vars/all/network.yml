@@ -1,0 +1,5 @@
+# Docker address plan on the VM. The VM LAN is 10.10.10.0/24, so container
+# networks live in 10.20.0.0/16 and 10.30.0.0/16 and never shadow its route.
+#   10.20.1.0/24  compose project hw1 (app_net)      - managed here, by Ansible
+#   10.30.0.0/24  tf_web_net (nginx from Terraform)  - managed by terraform/
+app_subnet: 10.20.1.0/24

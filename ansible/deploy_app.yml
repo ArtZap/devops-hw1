@@ -1,0 +1,5 @@
+- name: Deploy docker compose environment
+  hosts: app_hosts
+  become: true
+  roles:
+    - app
