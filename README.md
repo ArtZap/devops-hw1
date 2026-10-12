@@ -1,21 +1,23 @@
-# ДЗ #1 — фундамент DevOps-инфраструктуры
+# ДЗ #1. Фундамент DevOps-инфраструктуры
 
-Ansible + Docker Compose + Terraform (провайдер `kreuzwerker/docker`) + Bash на одной VM.
+Всё работает на одной VM, которую выдали на курсе. Хост настраивается Ansible, на нём крутится compose-окружение (прокси + app), а отдельно от него Terraform через провайдер `kreuzwerker/docker` поднимает ещё один nginx в своей сети. Есть скрипт мониторинга на bash.
 
 | | |
 |---|---|
-| VM | `111.88.162.106`, Ubuntu 24.04, 2 vCPU / 3 GB, VMware (выдана курсом) |
-| Control node | ноутбук: Terraform 1.16, Ansible core 2.16 |
-| Compose | `curl http://111.88.162.106` → «Hello World» через reverse proxy, сеть `hw1_app_net` |
-| Terraform | `curl -i http://111.88.162.106:8080` → `200 OK`, nginx в сети `tf_web_net` с томом `tf_web_content` |
+| VM | `111.88.162.106`, Ubuntu 24.04, 2 vCPU / 3 GB, VMware |
+| Откуда запускаю | ноутбук, Terraform 1.16, Ansible core 2.16 |
+| Compose | `curl http://111.88.162.106` отдаёт «Hello World» через reverse proxy, сеть `hw1_app_net` |
+| Terraform | `curl -i http://111.88.162.106:8080` отдаёт `200 OK`, nginx в сети `tf_web_net` с томом `tf_web_content` |
 
-## Порядок выполнения (по уточнению преподавателя)
+## В каком порядке делал
 
-1. **Этап 3 — Ansible** готовит хост: пользователи, sshd, Docker, firewall.
-2. **Этап 5 — Docker Compose** (тоже через Ansible): proxy + app в своей сети.
-3. **Terraform с провайдером Docker** — вместо Этапа 2 из файла задания: nginx-контейнер в новой сети, с томом, на нестандартном порту. С compose-окружением не связан.
+Преподаватель уточнил задание: этап 2 из файла (Terraform для облака) не делаем, сначала выполняем этап 3 с Ansible, а потом пишем Terraform на провайдере Docker. Поэтому порядок такой:
 
-Terraform идёт последним, потому что ему нужен уже установленный Docker и пользователь `deployer` в группе `docker`, которые создаёт Ansible.
+1. Ansible настраивает хост: пользователи, sshd, Docker, firewall (этап 3).
+2. Тем же Ansible разворачиваю compose с прокси и app (этап 5).
+3. Terraform создаёт nginx-контейнер в новой сети, с томом, на порту 8080. С compose он никак не связан.
+
+Terraform у меня последний, потому что ему нужен Docker на VM и пользователь `deployer` в группе `docker`. И то и другое создаёт Ansible.
 
 ## Структура
 
@@ -23,18 +25,18 @@ Terraform идёт последним, потому что ему нужен у�
 ansible/
   inventory.ini               хост vm1 (IP VM, пользователь student)
   group_vars/all/             deployer, /opt/app, подсеть compose, публичные порты
-  host_vars/vm1/admin.yml     IP администратора для SSH (git-ignored, есть .example)
+  host_vars/vm1/admin.yml     мои IP для SSH (в .gitignore, в репо только .example)
   setup_host.yml              роли common, operator, docker, firewall
   deploy_app.yml              роль app (compose в /opt/app)
   roles/common                deployer, sudo NOPASSWD, sshd только по ключу
-  roles/operator              vm-operator: минимальные права (аналог IAM-роли)
+  roles/operator              vm-operator с минимальными правами (вместо IAM-роли)
   roles/docker                Docker CE + compose plugin из официального репозитория
   roles/firewall              ufw: deny inbound, SSH только с admin_cidrs, 80 и 8080 открыты
   roles/app                   разворачивание compose-проекта
 compose/                      docker-compose.yml, конфиг прокси, страница app
 terraform/
   versions.tf                 провайдер kreuzwerker/docker, подключение к Docker по SSH
-  variables.tf                IP, порт, сеть, подсеть, образ — с validation
+  variables.tf                IP, порт, сеть, подсеть, образ, с validation
   main.tf                     docker_network, docker_volume, docker_image, docker_container
   outputs.tf                  URL, имя контейнера, сеть и IP, том
   site/                       nginx.conf и шаблон index.html для контейнера
@@ -42,7 +44,7 @@ scripts/monitor.sh            статус сервиса, журнал, оши�
 docs/outputs/                 полные выводы команд
 ```
 
-## Архитектура
+## Схема
 
 ```
  Internet ──► ufw ─┬─ 22/tcp   только с admin_cidrs ──► sshd (только ключи, root запрещён)
@@ -59,32 +61,32 @@ docs/outputs/                 полные выводы команд
  laptop ── terraform ── ssh://deployer@VM ── docker system dial-stdio ── dockerd
 ```
 
-Две bridge-сети не связаны: контейнер из одной не достаёт до другой (проверено ниже).
+Сети друг с другом не связаны, из одной в другую контейнер не достучится. Проверка ниже.
 
-Пользователи на VM:
+Кто есть на VM:
 
-| Пользователь | Кто создаёт | Права |
+| Пользователь | Откуда | Что может |
 |---|---|---|
-| `student` | выдан курсом | администратор, под ним работает Ansible |
-| `deployer` | Ansible (`roles/common`) | `sudo` без пароля (требование задания), группа `docker`; под ним работает Terraform |
-| `vm-operator` | Ansible (`roles/operator`) | вход только по ключу; `sudo` только `systemctl start/stop/restart docker` и `reboot` без аргументов |
-| `root` | — | вход по SSH запрещён (`PermitRootLogin no`) |
+| `student` | выдали на курсе | админ, под ним работает Ansible |
+| `deployer` | Ansible, `roles/common` | `sudo` без пароля (так в задании), группа `docker`; под ним работает Terraform |
+| `vm-operator` | Ansible, `roles/operator` | вход только по ключу; через `sudo` только `systemctl start/stop/restart docker` и `reboot` без аргументов |
+| `root` | | по SSH не пускает (`PermitRootLogin no`) |
 
-## Установка и запуск
+## Как запустить
 
-Нужно: Terraform ≥ 1.9, Ansible core ≥ 2.15, SSH-ключ в `authorized_keys` пользователя `student` на VM.
+Нужны Terraform ≥ 1.9, Ansible core ≥ 2.15 и SSH-ключ, который уже лежит в `authorized_keys` у `student` на VM.
 
 ```bash
 git clone https://github.com/ArtZap/devops-hw1-infra.git && cd devops-hw1-infra
 
-# 1. Ansible: настройка хоста (Этап 3)
+# 1. Ansible: настройка хоста (этап 3)
 cd ansible
 ansible-galaxy collection install -r requirements.yml -p ./collections
 cp host_vars/vm1/admin.yml.example host_vars/vm1/admin.yml   # свой IP: ssh student@<VM_IP> 'echo $SSH_CLIENT'
 ansible-playbook setup_host.yml
 ansible-playbook setup_host.yml          # второй прогон: changed=0
 
-# 2. Compose-окружение (Этап 5)
+# 2. Compose (этап 5)
 ansible-playbook deploy_app.yml
 curl http://<VM_IP>
 
@@ -96,20 +98,20 @@ terraform plan -out=tfplan
 terraform apply tfplan
 curl -i http://<VM_IP>:8080/
 
-# 4. Мониторинг (Этап 4)
+# 4. Мониторинг (этап 4)
 scp ../scripts/monitor.sh deployer@<VM_IP>:
 ssh deployer@<VM_IP> 'sudo ./monitor.sh docker'
 ```
 
-Удаление: `terraform destroy` удаляет контейнер, сеть и том; образ остаётся (`keep_locally`), им пользуется compose.
+`terraform destroy` удаляет контейнер, сеть и том. Образ остаётся (`keep_locally`), потому что его использует и compose.
 
 ## Результаты
 
-Полные выводы — в [`docs/outputs/`](docs/outputs/). Личные IP администратора замаскированы как `x.x`.
+Полные выводы лежат в [`docs/outputs/`](docs/outputs/). Свои IP я там замаскировал как `x.x`.
 
-### Ansible: идемпотентность
+### Ansible и идемпотентность
 
-Первый прогон — `changed=2` ([`ansible_setup_run1.txt`](docs/outputs/ansible_setup_run1.txt)): на этой VM роли уже запускались во время отладки, изменились только sudoers `vm-operator` и правило ufw для 8080. Второй прогон ([`ansible_setup_run2.txt`](docs/outputs/ansible_setup_run2.txt)):
+Первый прогон показал `changed=2` ([`ansible_setup_run1.txt`](docs/outputs/ansible_setup_run1.txt)). Роли на этой VM я уже запускал, пока отлаживал, так что поменялись только sudoers для `vm-operator` и правило ufw для 8080. Второй прогон ([`ansible_setup_run2.txt`](docs/outputs/ansible_setup_run2.txt)):
 
 ```
 TASK [common : Create deployment user] *****************************************
@@ -133,9 +135,9 @@ PLAY RECAP *********************************************************************
 vm1                        : ok=23   changed=0    unreachable=0    failed=0    skipped=2
 ```
 
-Повторный `deploy_app.yml` тоже даёт `changed=0` ([`ansible_deploy.txt`](docs/outputs/ansible_deploy.txt)).
+`deploy_app.yml` при повторном запуске тоже даёт `changed=0` ([`ansible_deploy.txt`](docs/outputs/ansible_deploy.txt)).
 
-Состояние хоста после настройки ([`host_checks.txt`](docs/outputs/host_checks.txt)):
+Что получилось на хосте ([`host_checks.txt`](docs/outputs/host_checks.txt)):
 
 ```
 $ sudo ufw status verbose
@@ -177,7 +179,7 @@ X-Proxy: hw1-nginx
 <body><h1>Hello World</h1><p>Served by the app container behind the nginx reverse proxy.</p></body>
 ```
 
-Заголовок `X-Proxy` ставит прокси, а страницу отдаёт `app`: запрос прошёл через оба контейнера.
+Заголовок `X-Proxy` добавляет прокси, а саму страницу отдаёт `app`. Значит, запрос прошёл через оба контейнера.
 
 ### Terraform: `state list`, `apply`, `curl -i`
 
@@ -205,7 +207,7 @@ $ terraform plan
 No changes. Your infrastructure matches the configuration.
 ```
 
-Полный план — [`terraform_plan.txt`](docs/outputs/terraform_plan.txt), состояние — [`terraform_show.txt`](docs/outputs/terraform_show.txt).
+Полный план в [`terraform_plan.txt`](docs/outputs/terraform_plan.txt), состояние в [`terraform_show.txt`](docs/outputs/terraform_show.txt).
 
 ```
 $ curl -i http://111.88.162.106:8080/
@@ -237,10 +239,10 @@ volume tf_web_content -> /usr/share/nginx/html
 $ docker exec hw1-nginx-1 wget -T 3 -qO- http://10.30.0.10/
 wget: download timed out          # из сети compose до tf-nginx не достать
 $ docker exec tf-nginx wget -T 3 -qO- http://10.20.1.2/
-wget: download timed out          # и в обратную сторону
+wget: download timed out          # и обратно тоже
 ```
 
-Данные тома переживают пересоздание контейнера ([`volume_persistence.txt`](docs/outputs/volume_persistence.txt)):
+Чтобы убедиться, что том реально работает, записал в него файл и пересоздал контейнер ([`volume_persistence.txt`](docs/outputs/volume_persistence.txt)). Файл остался:
 
 ```
 $ docker exec tf-nginx sh -c "echo persisted > /usr/share/nginx/html/note.txt"
@@ -252,7 +254,7 @@ HTTP/1.1 200 OK
 persisted
 ```
 
-Проверки входных данных ([`terraform_validation.txt`](docs/outputs/terraform_validation.txt)): `-var external_port=80` → `Invalid value for variable`, `-var network_subnet=10.20.0.0/16` → `Resource precondition failed` (пересекается с `hw1_app_net`).
+Проверил и валидацию ([`terraform_validation.txt`](docs/outputs/terraform_validation.txt)). С `-var external_port=80` план падает с `Invalid value for variable`, с `-var network_subnet=10.20.0.0/16` падает с `Resource precondition failed`, потому что такая подсеть пересекается с `hw1_app_net`.
 
 ### `monitor.sh`
 
@@ -287,60 +289,85 @@ ERROR: invalid service name: 'docker; id'
 exit=2
 ```
 
-Локально (Pop!_OS 24.04) — [`monitor_local.txt`](docs/outputs/monitor_local.txt): `docker` → 0, неактивный `apt-daily.service` → 1 с журналом, `nosuchsvc` → 3.
+На ноутбуке (Pop!_OS 24.04) тоже гонял, вывод в [`monitor_local.txt`](docs/outputs/monitor_local.txt): `docker` вернул 0, неактивный `apt-daily.service` вернул 1 и показал журнал, `nosuchsvc` вернул 3.
 
-Коды возврата: `0` — active, `1` — не active, `2` — неверный аргумент, `3` — unit не найден, `4` — нет systemd.
+Коды возврата: `0` сервис active, `1` не active, `2` неверный аргумент, `3` unit не найден, `4` нет systemd.
 
-## Архитектурные решения
+## Почему сделано так
 
-**Terraform управляет Docker на VM через SSH.** Провайдер подключается как `ssh://deployer@111.88.162.106:22`: на VM запускается `docker system dial-stdio`, и API Docker идёт внутри SSH-сессии. Сокет Docker не открыт по TCP, отдельные TLS-сертификаты не нужны, работает тот же ключ и тот же firewall, что и для SSH.
+### Terraform ходит в Docker по SSH
 
-**Ресурсы Terraform:**
-- `docker_network.web` — новая bridge-сеть `tf_web_net` с явной подсетью `10.30.0.0/24`. Precondition не даёт выбрать подсеть, пересекающуюся с LAN машины `10.10.10.0/24` (Docker-сеть перекрыла бы маршрут к шлюзу) или с `hw1_app_net`.
-- `docker_volume.web_content` — именованный том для `/usr/share/nginx/html`. Он живёт отдельно от контейнера: при пересоздании контейнера данные сохраняются.
-- `docker_image.nginx` — `nginx:1.27-alpine`, тег зафиксирован. `keep_locally = true`: тот же образ использует compose, `destroy` не должен его удалять.
-- `docker_container.nginx` — порт `8080 → 80`, только сеть `tf_web_net`, фиксированный IP `10.30.0.10`. `index.html` (из шаблона) и `nginx.conf` записываются блоками `upload` до старта контейнера; `index.html` попадает в том. `healthcheck` + `wait = true`: `apply` завершается ошибкой, если nginx не поднялся. Лимит памяти 128 MiB, `restart = unless-stopped`.
+Провайдер подключается к `ssh://deployer@111.88.162.106:22`. На VM при этом запускается `docker system dial-stdio`, и все запросы к Docker API идут внутри SSH-сессии. Открывать Docker по TCP не пришлось, сертификаты тоже не нужны: работает тот же ключ и тот же firewall, что и для обычного SSH.
 
-**Почему порт 8080.** 80 занят compose-прокси, 8081 — контейнером из другой лабы (`127.0.0.1:8081`). Validation требует непривилегированный порт (1024–65535) и не даёт взять 8081.
+### Что создаёт Terraform
 
-**Состояние Terraform.** Локальный `terraform.tfstate`, файл в `.gitignore`. `.terraform.lock.hcl` в репозитории фиксирует версию и хэши провайдера. Для команды нужен remote backend с блокировкой (S3-совместимый).
+`docker_network.web` это новая bridge-сеть `tf_web_net` с подсетью `10.30.0.0/24`. Я добавил precondition, который не даст выбрать подсеть, пересекающуюся с LAN самой машины `10.10.10.0/24` (иначе Docker-сеть перекрыла бы маршрут к шлюзу) или с `hw1_app_net`.
 
-**IAM и минимальные привилегии.** Облака нет, поэтому роли — это пользователи Linux с ограниченным sudo:
-- `vm-operator`: в sudoers перечислены точные командные строки. Команда без аргументов в sudoers разрешает любые аргументы, поэтому `reboot ""`. `systemctl status` не включён: он открывает pager (`less`) от root, а из него можно запустить shell.
-- `root` не входит по SSH, пароли отключены для всех.
-- `deployer` получает `NOPASSWD:ALL`, как требует задание. Группа `docker` по сути тоже root-доступ; это ограничение Docker, а не конфигурации.
-- Файлы sudoers проверяются `visudo -cf` до установки; конфиг sshd — `sshd -t`.
+`docker_volume.web_content` это именованный том, смонтированный в `/usr/share/nginx/html`. Он не зависит от контейнера, поэтому при пересоздании контейнера данные не теряются.
 
-**Security group (ufw).** Входящие запрещены по умолчанию. SSH — только с трёх `/32`, с которых я работаю. 80 и 8080 открыты всем: это сервисы. Исходящие разрешены: нужны apt и Docker Hub. Роль сначала проверяет `admin_cidrs` (не пусто, каждая сеть не шире `/24`, 22 не в публичных портах) и только потом включает ufw, иначе можно потерять доступ к VM. Модуль `ufw` умеет только добавлять правила, поэтому роль читает `ufw show added` и удаляет правила со своими комментариями (`ssh-admin`, `public`), которых больше нет в переменных. Удаление идёт после добавления: текущее правило SSH не пропадает ни на момент ([`ansible_firewall_drift.txt`](docs/outputs/ansible_firewall_drift.txt)). Правила, добавленные вручную без этих комментариев, роль не трогает. Ограничение: Docker пишет свои правила iptables в обход ufw, поэтому опубликованный порт открыт независимо от ufw. Правило для 8080 в ufw описывает намерение; сервисы, которые не должны быть снаружи, публикуются на `127.0.0.1:` (как 8081).
+`docker_image.nginx` это `nginx:1.27-alpine`, тег зафиксирован. Стоит `keep_locally = true`, потому что тот же образ использует compose и `destroy` не должен его удалять.
 
-**Ansible.** Только модули с проверкой состояния (`apt`, `user`, `copy`, `get_url`, `apt_repository`, `systemd_service`, `ufw`, `docker_compose_v2`). Единственный `command` — чтение `ufw show added` с `changed_when: false`, он ничего не меняет. Поэтому повторный прогон ничего не меняет. Docker ставится из официального репозитория, `docker.io` и другие конфликтующие пакеты удаляются. `setup_host.yml` — подготовка хоста, `deploy_app.yml` — приложение.
+`docker_container.nginx` публикует `8080 → 80`, подключён только к `tf_web_net` с фиксированным IP `10.30.0.10`. `index.html` (из шаблона) и `nginx.conf` записываются в контейнер блоками `upload` до старта, причём `index.html` ложится в том. Есть `healthcheck` и `wait = true`, так что если nginx не поднимется, `apply` упадёт с ошибкой. Ещё лимит памяти 128 MiB и `restart = unless-stopped`.
 
-**Compose.** Наружу опубликован только прокси. `app` доступен лишь внутри `app_net` по DNS-имени `app`. `depends_on: service_healthy` запускает прокси после того, как app прошёл healthcheck. Конфиги смонтированы только для чтения. Изменения в смонтированных файлах не видны compose (они не входят в его hash), поэтому handler перезапускает проект, когда файлы меняются.
+### Порт 8080
 
-## Проблемы и их решение
+80 уже занят compose-прокси, а 8081 занят контейнером из другой лабы (`127.0.0.1:8081`). В validation разрешены только непривилегированные порты 1024–65535, и 8081 отдельно запрещён.
 
-| Проблема | Как нашёл | Решение |
+### State
+
+`terraform.tfstate` хранится локально и в `.gitignore`. А вот `.terraform.lock.hcl` лежит в репозитории, он фиксирует версию и хэши провайдера. Если бы над проектом работала команда, нужен был бы remote backend с блокировкой, например S3-совместимый.
+
+### Пользователи и права
+
+Облака нет, поэтому вместо IAM-ролей у меня пользователи Linux с ограниченным sudo.
+
+У `vm-operator` в sudoers прописаны точные командные строки. Если в sudoers указать команду без аргументов, она разрешается с любыми аргументами, поэтому там `reboot ""`. `systemctl status` я туда не добавил: он открывает `less` от root, а из `less` можно запустить shell.
+
+root по SSH не заходит, пароли отключены у всех. `deployer` получил `NOPASSWD:ALL`, как требует задание. Группа `docker` по сути тоже даёт root, но это особенность самого Docker, с конфигурацией тут ничего не сделать. Файлы sudoers перед установкой проверяются через `visudo -cf`, конфиг sshd через `sshd -t`.
+
+### Firewall (ufw вместо security group)
+
+Входящие по умолчанию запрещены. SSH открыт только с трёх `/32`, с которых я работаю. 80 и 8080 открыты всем, это сервисы. Исходящие разрешены, без них не работают apt и Docker Hub.
+
+Прежде чем включать ufw, роль проверяет `admin_cidrs`: список не пустой, каждая сеть не шире `/24`, порт 22 не попал в публичные. Ошибка в этом списке означала бы потерю доступа к VM.
+
+Модуль `ufw` умеет только добавлять правила. Поэтому роль читает `ufw show added` и удаляет правила со своими комментариями (`ssh-admin`, `public`), которых уже нет в переменных. Удаляет после того, как добавит новые, так что текущее правило для SSH не пропадает ни на секунду ([`ansible_firewall_drift.txt`](docs/outputs/ansible_firewall_drift.txt)). Правила, которые кто-то добавил руками без этих комментариев, роль не трогает.
+
+Есть ограничение: Docker пишет свои правила iptables в обход ufw, и опубликованный порт открыт независимо от ufw. Правило для 8080 в ufw скорее документирует, что порт открыт намеренно. То, что не должно торчать наружу, надо публиковать на `127.0.0.1:` (как сделано с 8081).
+
+### Ansible
+
+Использую только модули, которые сами проверяют состояние: `apt`, `user`, `copy`, `get_url`, `apt_repository`, `systemd_service`, `ufw`, `docker_compose_v2`. Единственный `command` это чтение `ufw show added` с `changed_when: false`. Поэтому повторный прогон ничего не меняет. Docker ставлю из официального репозитория, а `docker.io` и другие конфликтующие пакеты удаляю. Плейбука два: `setup_host.yml` готовит хост, `deploy_app.yml` разворачивает приложение.
+
+### Compose
+
+Наружу опубликован только прокси. `app` доступен лишь внутри `app_net` по имени `app`. Благодаря `depends_on: service_healthy` прокси стартует только после того, как app прошёл healthcheck. Конфиги смонтированы read-only. Compose не замечает изменений в смонтированных файлах (они не входят в его hash), так что при их изменении проект перезапускает handler.
+
+## С чем столкнулся
+
+| Проблема | Как нашёл | Что сделал |
 |---|---|---|
-| Повторный `terraform plan` после `apply` хотел изменить контейнер: `memory_swap = 256 -> null` | `terraform plan` | Docker по умолчанию ставит swap = 2×memory. Задал `memory_swap = 128` явно, план стал `No changes` |
-| Опубликованный порт Docker доступен в обход ufw | `iptables -t nat -S DOCKER`: DNAT `--dport 8080 → 10.30.0.10:80`, трафик идёт через `FORWARD`, где `DOCKER-FORWARD` стоит раньше цепочек ufw; правила ufw в `INPUT` его не видят | порт 8080 открыт намеренно; внутренние сервисы публикуются только на `127.0.0.1` |
-| VM видит мой SSH с `93.175.x.x`, а `ifconfig.me` показывает `89.124.x.x` (разные NAT) | `echo $SSH_CLIENT`, `last` | `admin_cidrs` — список, адрес берётся с сервера |
-| Порт 80 занят системным nginx из прошлой лабы | `ss -tlnp` | роль `app` останавливает и отключает его |
-| `PasswordAuthentication yes` из `01-lab.conf` сильнее моего конфига: sshd берёт первое прочитанное значение | `sshd -T` | файл назван `00-hardening.conf`, проверка `sshd -t` перед установкой |
-| Модуль `ufw` только добавляет правила: IP, убранный из `admin_cidrs`, остался бы с доступом к SSH | ревью безопасности роли, тест с подброшенными правилами `198.51.100.7` → 22 и `9999/tcp` | роль удаляет свои правила, которых нет в переменных; тест: `changed=2` (оба удалены), следующий прогон `changed=0` |
-| `community.docker` 3.7.0 считает событие `Waiting` изменением → `changed=1` при каждом прогоне | вывод `-v` | `requirements.yml` с `community.docker` 4.x; готовность проверяется HTTP-запросом (`uri` + `until`) |
-| `monitor.sh` пропускал строки из `/var/log/syslog.1`: `grep: binary file matches` (NUL-байты после некорректного завершения) | тест на VM | `grep -a` |
+| После `apply` повторный `terraform plan` хотел поменять контейнер: `memory_swap = 256 -> null` | `terraform plan` | Docker по умолчанию ставит swap в два раза больше памяти. Задал `memory_swap = 128` явно, план стал `No changes` |
+| Опубликованный порт Docker доступен в обход ufw | `iptables -t nat -S DOCKER`: DNAT `--dport 8080 → 10.30.0.10:80`, трафик идёт через `FORWARD`, где `DOCKER-FORWARD` стоит раньше цепочек ufw, и правила ufw в `INPUT` его не видят | 8080 открыт намеренно, внутренние сервисы публикую только на `127.0.0.1` |
+| VM видит мой SSH с `93.175.x.x`, а `ifconfig.me` показывает `89.124.x.x` (разные NAT) | `echo $SSH_CLIENT`, `last` | `admin_cidrs` сделал списком, адрес смотрю со стороны сервера |
+| Порт 80 занимал системный nginx из прошлой лабы | `ss -tlnp` | роль `app` его останавливает и отключает |
+| `PasswordAuthentication yes` из `01-lab.conf` перебивал мой конфиг: sshd берёт первое прочитанное значение | `sshd -T` | назвал файл `00-hardening.conf`, перед установкой проверка `sshd -t` |
+| Модуль `ufw` только добавляет правила, и IP, убранный из `admin_cidrs`, сохранил бы доступ к SSH | при ревью роли; проверил, подкинув вручную правила `198.51.100.7` → 22 и `9999/tcp` | роль удаляет свои правила, которых нет в переменных. На тесте `changed=2` (оба удалены), следующий прогон `changed=0` |
+| `community.docker` 3.7.0 считал событие `Waiting` изменением, и каждый прогон давал `changed=1` | вывод с `-v` | в `requirements.yml` поставил `community.docker` 4.x, готовность проверяю HTTP-запросом (`uri` + `until`) |
+| `monitor.sh` пропускал строки из `/var/log/syslog.1` с `grep: binary file matches` (NUL-байты после некорректного выключения) | тест на VM | `grep -a` |
 
 ## Вопросы для самопроверки
 
-1. **Императивный vs декларативный подход.** Bash — последовательность команд: «сделай это». Terraform описывает желаемое состояние (`docker_container` с такими портами и сетью), сам сравнивает его с state и реальностью и строит план. Ansible по форме императивен (задачи по порядку), но его модули декларативны (`state: present`): модуль сначала проверяет состояние и действует, только если оно отличается.
-2. **Зачем нужен state.** По state Terraform сопоставляет ресурсы в коде с реальными объектами (`docker_container.nginx` ↔ контейнер с конкретным ID), считает diff и знает, что удалять. Если удалить state, Terraform «забудет» ресурсы: `apply` попытается создать их заново и упадёт на конфликте имён (`tf_web_net`, `tf-nginx` уже существуют), а `destroy` ничего не удалит. Восстановление — `terraform import` или блоки `import`. Обратная операция — `terraform state rm`: ресурс остаётся в реальности, но Terraform перестаёт им управлять.
-3. **Идемпотентность.** Повторное применение не меняет систему, если она уже в нужном состоянии. Ansible добивается этого модулями, которые сравнивают текущее и желаемое состояние, и handlers, которые срабатывают только при изменении. Проверка: второй прогон `setup_host.yml` и `deploy_app.yml` → `changed=0`. Для Terraform аналог — `plan` после `apply` показывает `No changes`.
-4. **Сервис не найден или лог пуст.** Пустой или неверный аргумент (regex блокирует `;`, пробелы и ведущий `-`) → код 2. `LoadState=not-found` → «Unit not found», код 3. Пустой или недоступный журнал → предупреждение с подсказкой (sudo / группа `systemd-journal`). Нет или нельзя прочитать `/var/log/syslog` → предупреждение, скрипт не падает. `grep` без совпадений (код 1) — это «0 ошибок», а не сбой.
-5. **Почему такой вариант security group.** Deny по умолчанию и только необходимые порты. SSH ограничен адресами администратора и работает только по ключам: исключены перебор паролей и сканирование SSH из интернета. 80 и 8080 открыты, потому что это сервисы. `app` и Docker API снаружи недоступны вообще (Docker API идёт только через SSH). Остаточный риск — Docker обходит ufw для опубликованных портов, поэтому публиковать что-либо на `0.0.0.0` можно только осознанно.
+**1. Императивный и декларативный подход.** Bash это просто последовательность команд. В Terraform я описываю, каким всё должно быть (`docker_container` с такими портами и сетью), а он сам сравнивает это со state и с реальностью и строит план. Ansible выполняет задачи по порядку, то есть по форме он императивный, но сами модули декларативные (`state: present`): модуль сначала смотрит, что есть, и что-то делает, только если состояние отличается.
 
-## Git workflow
+**2. Зачем state.** По нему Terraform связывает ресурсы в коде с реальными объектами (`docker_container.nginx` и контейнер с конкретным ID), считает diff и понимает, что удалять. Если state удалить, Terraform про ресурсы забудет. `apply` попробует создать их заново и упадёт на конфликте имён (`tf_web_net` и `tf-nginx` уже есть), а `destroy` ничего не удалит. Вернуть можно через `terraform import` или блоки `import`. Обратная операция `terraform state rm`: ресурс остаётся, но Terraform им больше не управляет.
 
-- `main` — Initial commit со структурой проекта (`terraform/`, `ansible/`, `scripts/`).
-- `feature/infra-setup` — по коммиту на этап: Ansible → monitor.sh → Compose → Terraform → документация.
-- Pull Request `feature/infra-setup` → `main`, само-ревью, merge commit.
-- После мержа — тег `v0.1.0`.
+**3. Идемпотентность.** Это когда повторный запуск ничего не меняет, если система уже в нужном состоянии. В Ansible за это отвечают модули, которые сравнивают текущее состояние с желаемым, и handlers, которые срабатывают только при изменениях. Проверял вторым прогоном `setup_host.yml` и `deploy_app.yml`, оба дали `changed=0`. У Terraform аналог: `plan` после `apply` пишет `No changes`.
+
+**4. Сервис не найден или лог пуст.** Пустой или кривой аргумент (regex не пропускает `;`, пробелы и `-` в начале) даёт код 2. Если `LoadState=not-found`, скрипт пишет «Unit not found» и выходит с кодом 3. Если журнал пустой или нет прав его читать, выводится предупреждение с подсказкой (sudo или группа `systemd-journal`). Если `/var/log/syslog` нет или его нельзя прочитать, тоже предупреждение, но скрипт не падает. Когда `grep` ничего не нашёл (код 1), это считается «0 ошибок», а не сбоем.
+
+**5. Почему такая security group.** Всё запрещено, кроме нужных портов. SSH открыт только с моих адресов и только по ключу, так что перебор паролей и сканирование SSH из интернета отпадают. 80 и 8080 открыты, потому что на них сервисы. `app` и Docker API снаружи недоступны вообще, Docker API идёт только через SSH. Остаётся риск, что Docker обходит ufw для опубликованных портов, поэтому публиковать что-то на `0.0.0.0` нужно осознанно.
+
+## Git
+
+В `main` лежит Initial commit со структурой (`terraform/`, `ansible/`, `scripts/`). Работа шла в ветке `feature/infra-setup`, по коммиту на этап: Ansible, monitor.sh, Compose, Terraform, документация. Потом Pull Request в `main` с само-ревью, merge commit и тег `v0.1.0`.
