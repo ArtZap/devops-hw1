@@ -1,0 +1,4 @@
+docker_container.nginx
+docker_image.nginx
+docker_network.web
+docker_volume.web_content

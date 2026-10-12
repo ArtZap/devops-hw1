@@ -1,0 +1,13 @@
+$ terraform plan -var external_port=80
+Error: Invalid value for variable
+
+  on variables.tf line 29:
+  29: variable "external_port" {
+$ terraform plan -var network_subnet=10.20.0.0/16
+Error: Resource precondition failed
+
+  on main.tf line 26, in resource "docker_network" "web":
+  26:       condition     = length(local.overlapping) == 0
+    ├────────────────
+    │ local.overlapping is tuple with 1 element
+

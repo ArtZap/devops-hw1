@@ -1,0 +1,36 @@
+$ curl -i http://111.88.162.106:8080/
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 12 Oct 2026 14:56:06 GMT
+Content-Type: text/html
+Content-Length: 394
+Last-Modified: Mon, 12 Oct 2026 14:55:41 GMT
+Connection: keep-alive
+ETag: "6accf4ed-18a"
+X-Managed-By: terraform
+Accept-Ranges: bytes
+
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>nginx by Terraform</title></head>
+<body>
+<h1>Hello from Terraform</h1>
+<p>nginx container created by the kreuzwerker/docker provider.</p>
+<ul>
+  <li>network: tf_web_net (10.30.0.0/24)</li>
+  <li>volume: tf_web_content mounted at /usr/share/nginx/html</li>
+  <li>host port: 8080 -> container port 80</li>
+</ul>
+</body>
+</html>
+
+$ curl -i http://111.88.162.106:8080/healthz
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 12 Oct 2026 14:56:06 GMT
+Content-Type: text/plain
+Content-Length: 3
+Connection: keep-alive
+X-Managed-By: terraform
+
+ok

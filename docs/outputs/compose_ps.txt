@@ -1,0 +1,11 @@
+$ docker compose ps
+NAME          IMAGE               COMMAND                  SERVICE   CREATED         STATUS                   PORTS
+hw1-app-1     nginx:1.27-alpine   "/docker-entrypoint.…"   app       4 minutes ago   Up 4 minutes (healthy)   80/tcp
+hw1-nginx-1   nginx:1.27-alpine   "/docker-entrypoint.…"   nginx     4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:80->80/tcp, [::]:80->80/tcp
+
+$ docker compose exec nginx wget -qO- http://app/
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hello World</title></head>
+<body><h1>Hello World</h1><p>Served by the app container behind the nginx reverse proxy.</p></body>
+</html>

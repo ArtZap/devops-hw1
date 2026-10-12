@@ -1,0 +1,28 @@
+# Stale rules planted by hand, as if removed from admin_cidrs / public_tcp_ports:
+$ sudo ufw allow proto tcp from 198.51.100.7 to any port 22 comment 'ssh-admin'
+$ sudo ufw allow 9999/tcp comment 'public'
+
+$ ansible-playbook setup_host.yml
+...
+TASK [firewall : Remove SSH rules for addresses no longer in admin_cidrs] ******
+changed: [vm1] => (item=198.51.100.7)
+
+TASK [firewall : Remove public rules for ports no longer in public_tcp_ports] ***
+changed: [vm1] => (item=9999)
+
+TASK [firewall : Enable ufw] ***************************************************
+ok: [vm1]
+
+PLAY RECAP *********************************************************************
+vm1                        : ok=25   changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+$ sudo ufw show added
+ufw allow from 93.175.x.x to any port 22 proto tcp comment 'ssh-admin'
+ufw allow from 89.124.x.x to any port 22 proto tcp comment 'ssh-admin'
+ufw allow from 83.242.x.x to any port 22 proto tcp comment 'ssh-admin'
+ufw allow 80/tcp comment 'public'
+ufw allow 8080/tcp comment 'public'
+
+$ ansible-playbook setup_host.yml
+PLAY RECAP *********************************************************************
+vm1                        : ok=23   changed=0    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0

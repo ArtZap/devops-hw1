@@ -1,0 +1,34 @@
+
+PLAY [Deploy docker compose environment] ***************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [vm1]
+
+TASK [app : Gather service facts] **********************************************
+ok: [vm1]
+
+TASK [app : Stop and disable host nginx] ***************************************
+ok: [vm1]
+
+TASK [app : Create application directories] ************************************
+ok: [vm1] => (item=)
+ok: [vm1] => (item=proxy)
+ok: [vm1] => (item=app)
+
+TASK [app : Copy compose project] **********************************************
+ok: [vm1] => (item=docker-compose.yml)
+ok: [vm1] => (item=proxy/nginx.conf)
+ok: [vm1] => (item=app/index.html)
+
+TASK [app : Write compose environment] *****************************************
+ok: [vm1]
+
+TASK [app : Start compose project] *********************************************
+ok: [vm1]
+
+TASK [app : Wait until the proxy serves the app] *******************************
+ok: [vm1]
+
+PLAY RECAP *********************************************************************
+vm1                        : ok=8    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
