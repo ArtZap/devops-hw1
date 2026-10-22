@@ -140,9 +140,9 @@ vm1                        : ok=23   changed=0    unreachable=0    failed=0    s
 ```
 $ sudo ufw status verbose
 Default: deny (incoming), allow (outgoing), deny (routed)
-22/tcp                     LIMIT IN    Anywhere                 # ssh
 80/tcp                     ALLOW IN    Anywhere                 # public
 8080/tcp                   ALLOW IN    Anywhere                 # public
+22/tcp                     LIMIT IN    Anywhere                 # ssh
 
 $ sudo -l -U vm-operator
 (root) NOPASSWD: /usr/bin/systemctl start docker, /usr/bin/systemctl stop docker,

@@ -50,7 +50,7 @@ ok: [vm1] => (item=docker)
 TASK [docker : Let deployer use Docker without sudo] ***************************
 ok: [vm1]
 
-TASK [firewall : Validate admin_cidrs] *****************************************
+TASK [firewall : Validate public ports] ****************************************
 ok: [vm1]
 
 TASK [firewall : Install ufw] **************************************************
@@ -60,10 +60,8 @@ TASK [firewall : Set default policies] *****************************************
 ok: [vm1] => (item={'direction': 'incoming', 'policy': 'deny'})
 ok: [vm1] => (item={'direction': 'outgoing', 'policy': 'allow'})
 
-TASK [firewall : Allow SSH from admin networks] ********************************
-ok: [vm1] => (item=93.175.x.x/32)
-ok: [vm1] => (item=89.124.x.x/32)
-ok: [vm1] => (item=83.242.x.x/32)
+TASK [firewall : Allow SSH from anywhere, rate-limited] ************************
+ok: [vm1]
 
 TASK [firewall : Allow public service ports] ***********************************
 ok: [vm1] => (item=80)
@@ -72,7 +70,7 @@ ok: [vm1] => (item=8080)
 TASK [firewall : Read rules managed by this role] ******************************
 ok: [vm1]
 
-TASK [firewall : Remove SSH rules for addresses no longer in admin_cidrs] ******
+TASK [firewall : Remove per-address SSH rules] *********************************
 skipping: [vm1]
 
 TASK [firewall : Remove public rules for ports no longer in public_tcp_ports] ***
