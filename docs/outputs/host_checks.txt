@@ -6,13 +6,12 @@ New profiles: skip
 
 To                         Action      From
 --                         ------      ----
-22/tcp                     ALLOW IN    93.175.x.x               # ssh-admin
-22/tcp                     ALLOW IN    89.124.x.x             # ssh-admin
-22/tcp                     ALLOW IN    83.242.x.x              # ssh-admin
 80/tcp                     ALLOW IN    Anywhere                   # public
 8080/tcp                   ALLOW IN    Anywhere                   # public
+22/tcp                     LIMIT IN    Anywhere                   # ssh
 80/tcp (v6)                ALLOW IN    Anywhere (v6)              # public
 8080/tcp (v6)              ALLOW IN    Anywhere (v6)              # public
+22/tcp (v6)                LIMIT IN    Anywhere (v6)              # ssh
 
 $ sudo -l -U vm-operator
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
