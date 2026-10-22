@@ -3,3 +3,9 @@
   community.docker.docker_compose_v2:
     project_src: "{{ app_dir }}"
     state: restarted
+
+- name: Reload host nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: reloaded
+  when: ansible_facts.services['nginx.service'].state | default('') == 'running'

@@ -7,7 +7,7 @@ ok: [vm1]
 TASK [app : Gather service facts] **********************************************
 ok: [vm1]
 
-TASK [app : Stop and disable host nginx] ***************************************
+TASK [app : Free port 80 from the host nginx default site] *********************
 ok: [vm1]
 
 TASK [app : Create application directories] ************************************

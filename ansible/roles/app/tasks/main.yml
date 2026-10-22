@@ -1,13 +1,13 @@
 - name: Gather service facts
   ansible.builtin.service_facts:
 
-# Leftover system nginx from an earlier lab holds port 80.
-- name: Stop and disable host nginx
-  ansible.builtin.systemd_service:
-    name: nginx
-    state: stopped
-    enabled: false
-  when: "'nginx.service' in ansible_facts.services"
+# The host nginx may serve other sites (e.g. the runner lab on 8090), so keep
+# it running and only drop its stock site, which listens on port 80.
+- name: Free port 80 from the host nginx default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload host nginx
 
 - name: Create application directories
   ansible.builtin.file:
