@@ -1,5 +1,3 @@
 # Open to everyone: 80 - compose reverse proxy, 8080 - nginx from Terraform.
+# SSH (22) has its own rate-limited rule in roles/firewall.
 public_tcp_ports: [80, 8080]
-
-# admin_cidrs (SSH sources) are personal addresses and live in the git-ignored
-# host_vars/vm1/admin.yml; see host_vars/vm1/admin.yml.example.

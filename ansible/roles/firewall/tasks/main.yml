@@ -1,17 +1,12 @@
-# "Security group" of the VM on ufw: deny inbound by default, SSH only from
-# admin_cidrs, public_tcp_ports for everyone.
+# "Security group" of the VM on ufw: deny inbound by default, SSH from any
+# address but rate-limited (login is key-only, see role common),
+# public_tcp_ports for everyone.
 
-# A wrong list here locks us out of SSH once ufw is enabled, so check it first.
-- name: Validate admin_cidrs
+- name: Validate public ports
   ansible.builtin.assert:
     that:
-      - admin_cidrs | length > 0
-      - admin_cidrs | select('match', '^(\\d{1,3}\\.){3}\\d{1,3}/\\d{1,2}$') | list | length == admin_cidrs | length
-      - admin_cidrs | map('split', '/') | map('last') | map('int') | min >= 24
       - 22 not in public_tcp_ports
-    fail_msg: >-
-      admin_cidrs must be a non-empty list of /24-or-narrower networks
-      (host_vars/vm1/admin.yml), and port 22 must not be public.
+    fail_msg: SSH is managed by its own rate-limited rule; keep 22 out of public_tcp_ports.
     quiet: true
 
 - name: Install ufw
@@ -27,14 +22,14 @@
     - { direction: incoming, policy: deny }
     - { direction: outgoing, policy: allow }
 
-- name: Allow SSH from admin networks
+# limit = deny an address that opens 6+ connections within 30 seconds:
+# keeps password-less brute force bots from hammering sshd.
+- name: Allow SSH from anywhere, rate-limited
   community.general.ufw:
-    rule: allow
+    rule: limit
     proto: tcp
-    from_ip: "{{ item }}"
     to_port: "22"
-    comment: ssh-admin
-  loop: "{{ admin_cidrs }}"
+    comment: ssh
 
 - name: Allow public service ports
   community.general.ufw:
@@ -44,29 +39,26 @@
     comment: public
   loop: "{{ public_tcp_ports }}"
 
-# The ufw module only adds rules. Without this, an address dropped from
-# admin_cidrs or a port dropped from public_tcp_ports would stay open.
-# Only rules carrying our comments are touched; runs after the adds, so the
-# current SSH rule is never missing.
+# The ufw module only adds rules, so rules this role no longer wants are
+# removed explicitly. Only rules carrying our comments are touched; this runs
+# after the adds, so SSH stays reachable the whole time.
 - name: Read rules managed by this role
   ansible.builtin.command: ufw show added
   register: ufw_added
   changed_when: false
   check_mode: false
 
-- name: Remove SSH rules for addresses no longer in admin_cidrs
+- name: Remove per-address SSH rules
   community.general.ufw:
     rule: allow
     proto: tcp
     from_ip: "{{ item }}"
     to_port: "22"
     delete: true
-  # ufw prints a /32 as a bare address.
   loop: >-
     {{ ufw_added.stdout_lines
        | select('match', "^ufw allow from \S+ to any port 22 proto tcp comment 'ssh-admin'$")
-       | map('regex_replace', '^ufw allow from (\S+) .*$', '\1')
-       | difference(admin_cidrs | map('regex_replace', '/32$', '')) }}
+       | map('regex_replace', '^ufw allow from (\S+) .*$', '\1') | list }}
 
 - name: Remove public rules for ports no longer in public_tcp_ports
   community.general.ufw:
@@ -80,7 +72,6 @@
        | map('regex_replace', '^ufw allow (\d+)/tcp .*$', '\1')
        | difference(public_tcp_ports | map('string')) }}
 
-# Rules for our SSH address are already in place, so the session survives.
 - name: Enable ufw
   community.general.ufw:
     state: enabled

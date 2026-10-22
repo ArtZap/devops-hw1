@@ -1,4 +1,0 @@
-# Copy to admin.yml. Your public IP(s) as /32, as the VM sees them:
-#   ssh student@<VM_IP> 'echo $SSH_CLIENT'
-admin_cidrs:
-  - 203.0.113.10/32

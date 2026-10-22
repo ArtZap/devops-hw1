@@ -17,5 +17,3 @@ id_*
 tfplan
 ansible/collections/
 
-# Personal admin IPs for the ufw role
-ansible/host_vars/*/admin.yml
